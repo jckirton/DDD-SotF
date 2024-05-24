@@ -7,7 +7,7 @@ import random
 import time
 
 # Defining global variables. These are:
-# Save file names, the player's chip total, card suits, card ranks, and the ranks corrosponding integer values,
+# Save file names, the player's chip total, card suits, card ranks and their corrosponding integer values, and the player turn state.
 save_1 = ".chips"
 save_2 = ".chips2"
 save_3 = ".chips3"
@@ -44,6 +44,7 @@ values = {
     "King": 10,
     "Ace": 11,
 }
+player_turn = True
 
 
 # Defining the card object.
@@ -330,20 +331,37 @@ def choose_save(chips: Chips):
             total = 100
 
 
-def take_bet(chips):
+def take_bet(chips: Chips):
+    """
+    Prompts the user for their bet, or lets them change their save.
+
+    chips: The player chips instance.
+    """
+
+    # Contained within a loop for reprompting after an invalid input, or the chosen save being changed.
     while True:
+        # Prompt and input.
         chips.bet = input(
-            f"\nHow many chips out of {total} would you like to bet?\nType 'Back' to go back.\n\n"
+            f'\nHow many chips out of {total} would you like to bet?\nType "Back" to go back.\n\n'
         )
 
+        # Checking if the user decided to go back.
+        # Going back is disallowed if the debug save was chosen due to the debug menu allowing you to "rig" games.
         if chips.bet.lower() in "back" and chips.chosen_save != "debug":
             choose_save(chips)
+        # Handling the user's bet input.
         else:
+            # Contained within a try-except block to catch errors and stuff.
             try:
+                # Converting the input to an int and storing that.
+                # If the input is invalid, a ValueError is thrown.
                 chips.bet = int(chips.bet)
+            # ValueError handling.
             except ValueError:
+                # Prompting the user to enter a number, then requesting the bet again.
                 print("Please put in a number, otherwise it wont work.")
             else:
+                # Checking if the bet made was too big, too little, or negative, and giving funny dialog.
                 if chips.bet > total:
                     print("\n" * 100)
                     print(f"You only have {total} chips not {chips.bet} chips!")
@@ -358,89 +376,135 @@ def take_bet(chips):
                 elif chips.bet < 10:
                     print("\n" * 100)
                     print("You have to bet more than that!")
+                # The bet was valid. Exiting the loop.
                 else:
                     break
 
 
 def hit(deck, hand):
+    """
+    The hit action. Deals a card to the given hand.
+
+    deck: The deck object.
+    hand: The hand that's hitting.
+    """
+    # Gets the top card, gives it to the hand, and tells the hand to do ace math.
     card = deck.deal()
     hand.add_card(card)
     hand.adjust_for_ace()
 
 
-def hit_or_stand(deck, hand):
-    global game_on
+def hit_or_stand(deck: Deck, player_hand: Hand):
+    """
+    Asks the player what they would like to do for their turn.
 
-    choice = input("\nHit or Stand? ").lower()
-    if choice in "hit" and choice != "" and hand.value != 21:
-        hit(deck, hand)
-    elif hand.value == 21 and choice not in "hit":
+    deck: The deck object.
+    hand: The player hand.
+    """
+    # Referencing the global player turn variable.
+    global player_turn
+
+    # Getting the player's choice of action.
+    choice = input("\nHit or Stand?\n").lower()
+    # If the player types hit or something adjacent to it that isn't nothing, hit.
+    # If they input nothing, they stand.
+    if choice in "hit" and choice != "" and player_hand.value != 21:
+        hit(deck, player_hand)
+    # Stoping the player from ruining a perfect hand, and making them stand.
+    elif player_hand.value == 21 and choice in "hit":
         print("\nI'm not letting you bust yourself!")
         time.sleep(1.5)
         print("\n---- Player Stands. Dealers turn. ----")
-        game_on = False
+        player_turn = False
+    # The player stands.
     else:
         print("\n---- Player Stands. Dealers turn. ----")
-        game_on = False
+        player_turn = False
 
 
-def show_some(player, dealer):
+def show_some(player: Hand, dealer: Hand):
+    """
+    Shows the player and dealer hands. But only some of the dealer's.
+
+    player: The player hand.
+    dealer: The dealer hand.
+    """
+    # Showing the hands. Funky string stuff.
     print("\nDealer's Hand:")
     print(" <card hidden>")
-    print("", dealer.cards[1])
+    print(dealer.cards[1])
     print("\nPlayer's Hand:", *player.cards, sep="\n ")
     print("Player's Hand =", player.value)
 
 
-def show_all(player, dealer):
+def show_all(player: Hand, dealer: Hand):
+    """Shows the player and dealer hands. All of it this time.
+
+    player: The player hand.
+    dealer: The dealer hand.
+    """
     print("\nDealer's Hand:", *dealer.cards, sep="\n ")
     print("Dealer's Hand =", dealer.value)
     print("\nPlayer's Hand:", *player.cards, sep="\n ")
     print("Player's Hand =", player.value)
 
 
-def player_busts(player, dealer, chips):
+# Functions run upon the according game end condition.
+# Shows hands, prints some text, and tells the chips object to do the appropriate thing.
+
+
+# Player-caused winn and loss conditions.
+def player_busts(player: Hand, dealer: Hand, chips: Chips):
     print("\n" * 100)
     show_all(player, dealer)
-    print("you bust! 😡")
+    print("You bust!")
     chips.lose_bet()
 
 
-def player_wins(player, dealer, chips):
+def player_wins(player: Hand, dealer: Hand, chips: Chips):
     print("\n" * 100)
     show_all(player, dealer)
-    print("you win! 😃")
+    print("You win!")
     chips.win_bet()
 
 
-def dealer_busts(player, dealer, chips):
+# Dealer caused win and loss conditions.
+def dealer_busts(player: Hand, dealer: Hand, chips: Chips):
     print("\n" * 100)
     show_all(player, dealer)
-    print("Dealer busts! 😃")
+    print("Dealer busts!")
     chips.win_bet()
 
 
-def dealer_wins(player, dealer, chips):
+def dealer_wins(player: Hand, dealer: Hand, chips: Chips):
     print("\n" * 100)
     show_all(player, dealer)
-    print("Dealer wins! 😞")
+    print("Dealer wins!")
     chips.lose_bet()
 
 
-def push(player, dealer):
+# A tie.
+def push(player: Hand, dealer: Hand):
     print("\n" * 100)
     show_all(player, dealer)
     print("Dealer and Player tie! It's a push...")
 
 
-def blackjack(player, dealer, chips, win=True):
+# A blackjack occurs.
+# Basically the same, but it can happen to both the player and the dealer, and it does blackjack math for winnings.
+def blackjack(player: Hand, dealer: Hand, chips: Chips, win=True):
+    """
+    A blackjack happened.
+
+    win: Weather or not the player is the one who won. True by default.
+    """
     print("\n" * 100)
     show_all(player, dealer)
     if win:
-        print("You got a blackjack! 😳")
+        print("You got a blackjack!")
         chips.win_bet(blackjack=True)
     else:
-        print("The dealer got a blackjack! 😰")
+        print("The dealer got a blackjack!")
         chips.lose_bet()
 
 
@@ -465,17 +529,21 @@ def replay():
 
 
 def play():
+    """
+    The actual gameplay loop.
+    """
+    # Initial save choice.
     choose_save(Chips)
     while True:
-        # Print an opening statement
+        # Welcome screen.
         print("\n" * 100)
         print("Hello and welcome to Blackjack.")
         print("A production by Ben & Son, a coding family.\n")
-        global game_on
-        game_on = True
+        global player_turn
+        player_turn = True
         black_jack = False
         customising = False
-        # Create & shuffle the deck, deal two cards to each player
+        # Create & shuffle the deck, deal two cards to each player.
         deck = Deck()
         deck.shuffle()
 
@@ -594,7 +662,7 @@ def play():
             black_jack = True
 
         # PLAYERS TURN
-        while game_on and not black_jack:
+        while player_turn and not black_jack:
 
             hit_or_stand(deck, player_hand)
 
@@ -640,5 +708,7 @@ def play():
             break
 
 
+# Fancy thing for running the game if the blackjack file itself is being run.
+# Also avoids the play function being run upon an import of the file.
 if __name__ == "__main__":
     play()

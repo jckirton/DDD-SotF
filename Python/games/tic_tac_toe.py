@@ -278,6 +278,7 @@ def play():
             break
 
 
-# Fancy thing for running the game if the tic_tac_toe file itself is being run, avoiding the play function being run upon an import of the file.
+# Fancy thing for running the game if the tic_tac_toe file itself is being run.
+# Also avoids the play function being run upon an import of the file.
 if __name__ == "__main__":
     play()
