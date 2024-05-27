@@ -123,6 +123,19 @@ class Hand:
 
         card: The card being added to the hand.
         """
+
+        def adjust_for_ace(self):
+            """
+            Adjusts the hand value to account for aces, because aces are funky in blackjack.
+            """
+            # Checking if the hand value is greater than 21, and there are aces worth 11 present.
+            # This is the criteria for an ace changing value from 11 to 1.
+            while self.value > 21 and self.aces:
+                # Adjuting the hand value.
+                self.value -= 10
+                # Adjusting the count of "11-aces".
+                self.aces -= 1
+
         # Adding the card to the hand.
         self.cards.append(card)
         # Adjusting the hand value.
@@ -131,17 +144,7 @@ class Hand:
         if card.rank == "Ace":
             self.aces += 1
 
-    def adjust_for_ace(self):
-        """
-        Adjusts the hand value to account for aces, because aces are funky in blackjack.
-        """
-        # Checking if the hand value is greater than 21, and there are aces worth 11 present.
-        # This is the criteria for an ace changing value from 11 to 1.
-        while self.value > 21 and self.aces:
-            # Adjuting the hand value.
-            self.value -= 10
-            # Adjusting the count of "11-aces".
-            self.aces -= 1
+        adjust_for_ace()
 
 
 # Defining the chips object.
@@ -543,6 +546,7 @@ def play():
         player_turn = True
         black_jack = False
         customising = False
+
         # Create & shuffle the deck, deal two cards to each player.
         deck = Deck()
         deck.shuffle()
@@ -550,17 +554,15 @@ def play():
         player_hand = Hand()
         player_hand.add_card(deck.deal())
         player_hand.add_card(deck.deal())
-        player_hand.adjust_for_ace()
 
         dealer_hand = Hand()
         dealer_hand.add_card(deck.deal())
         dealer_hand.add_card(deck.deal())
-        dealer_hand.adjust_for_ace()
 
-        # Set up the Player's chips
-        player_chips = Chips()  # remember the default value is 100
+        # Set up the Player's chips.
+        player_chips = Chips()
 
-        # Prompt the Player for their bet
+        # The debug menu. You don't need to pay too much attention to this.
         if player_chips.chosen_save == "debug":
             customising = True
             what_hand = ""
@@ -647,10 +649,12 @@ def play():
                     print("All changes have been reset.")
                     time.sleep(2)
 
+        # Taking player bet.
         take_bet(player_chips)
-        # Show cards (but keep one dealer card hidden)
+        # Show cards, but keep one dealer card hidden
         show_some(player_hand, dealer_hand)
 
+        # Checking for blackjack conditions.
         if player_hand.value == 21 and dealer_hand.value == 21:
             push(player_hand, dealer_hand)
             black_jack = True
@@ -661,30 +665,29 @@ def play():
             blackjack(player_hand, dealer_hand, player_chips, win=False)
             black_jack = True
 
-        # PLAYERS TURN
+        # Player turn.
         while player_turn and not black_jack:
 
+            # Prompt for player action.
             hit_or_stand(deck, player_hand)
 
             # Show cards (but keep one dealer card hidden)
             show_some(player_hand, dealer_hand)
 
-            # If player's hand exceeds 21, run player_busts() and break out of loop
+            # Check for player bust condition (when hand value > 21), and end game if so.
             if player_hand.value > 21:
                 player_busts(player_hand, dealer_hand, player_chips)
                 break
 
         # If Player hasn't busted, play Dealer's hand until Dealer reaches 17
-        # DEALERS TURN
+        # Dealer turn.
         if player_hand.value <= 21 and not black_jack:
 
+            # Dealer takes cards until their hand value is ≥ 17.
             while dealer_hand.value < 17:
                 hit(deck, dealer_hand)
 
-            # Show all cards
-            # show_all(player_hand, dealer_hand)
-
-            # Run different winning scenarios
+            # Check for game end scenarios.
             if dealer_hand.value > 21:
                 dealer_busts(player_hand, dealer_hand, player_chips)
 
@@ -698,7 +701,7 @@ def play():
                 push(player_hand, dealer_hand)
 
         # Inform Player of their chips total
-        print("\nPlayer's chip total stands at", total)
+        print(f"\nPlayer's chip total stands at {total}")
 
         # Ask to play again
         if not replay():

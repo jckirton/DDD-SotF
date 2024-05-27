@@ -6,11 +6,11 @@ import random
 import time
 
 
-def display_board(board: list):
+def display_board(board: list[str]):
     """
     Takes the current game board state and displays it.
 
-    board: The current board state.
+    board: The current board state. A list of strings of length 10, with index 0 being "#", and index 1-9 being the respective board positions.
     """
     # "Clearing" the terminal screen by printing a whole lot of new lines.
     print("\n" * 100)
@@ -64,7 +64,7 @@ def place_marker(board: list, marker: str, position: int):
     Updates the board state based on the supplied information.
     In practice, this is the player's chosen move.
 
-    board: The current board state.
+    board: The current board state. A list of strings of length 10, with index 0 being "#", and index 1-9 being the respective board positions.
     marker: The player's marker.
     position: The player's chosen position.
     """
@@ -75,7 +75,7 @@ def win_check(board: list, mark: str) -> bool:
     """
     Checks the board state for a win condition of the supplied player marker.
 
-    board: The board state.
+    board: The board state. A list of strings of length 10, with index 0 being "#", and index 1-9 being the respective board positions.
     mark: The player marker being checked.
     """
     # Brute forcing win condition checks, returning True if a win condition is met, or False if not.
@@ -111,7 +111,7 @@ def space_check(board: list, position: int) -> bool:
     """
     Checks if the supplied board position is empty, and returns True if it is.
 
-    board: Current board state.
+    board: Current board state. A list of strings of length 10, with index 0 being "#", and index 1-9 being the respective board positions.
     position: Chosen position being checked for avalability.
     """
     # Checking that there are no player markers or filler markers in the supplied position.
@@ -133,7 +133,7 @@ def full_board_check(board: list):
     """
     Checks if the board is full.
 
-    board: Current board state.
+    board: Current board state. A list of strings of length 10, with index 0 being "#", and index 1-9 being the respective board positions.
     """
     # Checking every index in the board state from 1-9 for player markers. If an empty space is found, returns False.
     for index in range(1, len(board)):
@@ -147,7 +147,7 @@ def player_choice(board: list, player: tuple[str, int]):
     """
     Asks the player where they would like to place their marker, and checks if that choice is valid.
 
-    board: Current board state.
+    board: Current board state. A list of strings of length 10, with index 0 being "#", and index 1-9 being the respective board positions.
     player: The player information. Contains the player's marker and "player number".
     """
     position = None
